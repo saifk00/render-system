@@ -1,0 +1,5 @@
+#pragma once
+
+#define MODELS_DIR "@CMAKE_MODELS_DIR@"
+#define ASSETS_DIR "@CMAKE_ASSETS_DIR@"
+#define SHADERS_DIR "@CMAKE_SHADERS_DIR@"
