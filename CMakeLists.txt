@@ -8,20 +8,19 @@ project(
 
 # build external dependencies
 
-set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
-set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
-set(BUILD_ASSIMP_TOOLS  ON)
-set(ASSIMP_BUILD_STATIC_LIB ON)
-set(ASSIMP_LIBRARY_DIRS "extern/assimp/code")
-set(ASSIMP_INCLUDE_DIRS "extern/assimp/include" "extern/assimp/build/include")
+set(BUILD_SHARED_LIBS OFF)
+set(ASSIMP_LIBRARY_DIRS "extern/assimp/lib")
 
-include_directories(${ASSIMP_INCLUDE_DIRS})
 link_directories(${ASSIMP_LIBRARY_DIRS})
 
 add_subdirectory(extern/assimp)
 add_subdirectory(extern/glad)
 add_subdirectory(extern/glfw)
+
 
 # build the rendering library
 add_subdirectory(src)
