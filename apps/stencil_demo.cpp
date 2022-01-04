@@ -149,7 +149,8 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
 
         // rotate the light
-        glm::quat rot = glm::angleAxis((float)glm::radians(0.05f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::quat rot = glm::angleAxis((float)glm::radians(50.0f * deltaTime),
+            glm::vec3(0.0f, 1.0f, 0.0f));
         lightPos = rot * glm::vec4(lightPos, 1.0f);
 
         // also draw the lamp object

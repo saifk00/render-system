@@ -13,6 +13,6 @@ Dependencies:
 
 `cmake -S. -B_build` should produce the required build files
 
-Note: on linux, you will need development headers for whatever windowing system you use as well as an OpenGL API (`apt install libxorg-dev libgl1-mesa-dev` works for me)
+Note: on linux, you will need development headers for whatever windowing system you use as well as an OpenGL API (`apt install libxorg-dev libglu1-mesa-dev` works for me)
 
 `make *_demo` in the build folder should then create the executable for various demos. The `render_lib` target produces a library containing various utilities for rendering (model loading, lighting, etc.)

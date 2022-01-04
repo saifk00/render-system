@@ -121,6 +121,7 @@ void main() {
     // info required for point lights
     //   1. calculate the orientation of the surface relative to the *camera*
     vec3 viewDir = normalize(viewPos - FragPos);
+    FragColor = vec4(0.0);
     for (int i = 0; i < NR_POINT_LIGHTS_MAX; i++) {
         if (pointLights[i].activated) {
             FragColor += CalcPointLight(pointLights[i], Normal, FragPos, viewDir);
