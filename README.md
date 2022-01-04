@@ -15,4 +15,4 @@ Dependencies:
 
 Note: on linux, you will need development headers for whatever windowing system you use as well as an OpenGL API (`apt install libxorg-dev libgl1-mesa-dev` works for me)
 
-`make render_app` in the build folder should then create the executable for the basic rendering engine. The `render_lib` target produces a library containing various utilities for rendering (model loading, lighting, etc.)
+`make *_demo` in the build folder should then create the executable for various demos. The `render_lib` target produces a library containing various utilities for rendering (model loading, lighting, etc.)

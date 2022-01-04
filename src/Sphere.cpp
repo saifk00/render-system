@@ -76,10 +76,28 @@ Sphere::Sphere(glm::vec3 position,
     this->radius = radius;
     this->angle = angle;
     this->resolution = resolution;
+    this->scale = 1.0f;
 
     generateVertexInfo();
 
     if (!base_texture.empty()) this->AddTexture(base_texture, "texture_diffuse");
+
+    mesh = std::make_unique<Mesh>(vertices, indices, textures);
+    mesh->DrawMode = TriangleMode;
+}
+
+Sphere::Sphere(const Sphere& other) {
+    this->position = other.position;
+    this->axis = other.axis;
+    this->color = other.color;
+    this->radius = other.radius;
+    this->angle = other.angle;
+    this->resolution = other.resolution;
+    this->scale = other.scale;
+
+    this->vertices = other.vertices;
+    this->indices = other.indices;
+    this->textures = other.textures;
 
     mesh = std::make_unique<Mesh>(vertices, indices, textures);
     mesh->DrawMode = TriangleMode;
@@ -103,6 +121,7 @@ void Sphere::AddTexture(const std::string& file, const std::string& type) {
 void Sphere::Draw(Shader& shader) {
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, position);
+    model = glm::scale(model, glm::vec3(scale));
     model = glm::rotate(model, (float)glm::radians(angle), axis);
 
     shader.setMat4("model", model);
@@ -120,4 +139,8 @@ void Sphere::Rotate(float degrees) {
 
 void Sphere::SetAxis(glm::vec3 newAxis) {
     axis = newAxis;
+}
+
+void Sphere::Scale(float newScale) {
+    this->scale = newScale;
 }

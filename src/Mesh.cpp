@@ -19,15 +19,21 @@ void Mesh::Draw(Shader& shader)
     //  texture_diffuseN   => diffuse map
     for (unsigned int i = 0; i < textures.size(); i++) {
         glActiveTexture(GL_TEXTURE0 + i);
-        std::string name = textures[i].type;
-        std::string num;
-        if (name == "texture_diffuse") num = std::to_string(diffuseNr++);
-        else if (name == "texture_specular") num = std::to_string(specularNr++);
-        else std::cout << "ERROR: invalid texture name " << name << std::endl;
-
-        auto prop = "material." + name + num;
-        shader.setInt(prop.c_str(), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
+
+        // if textures haven't changed, this doesnt need to be done
+        if (textures_dirty) {
+            std::string name = textures[i].type;
+            std::string num;
+            if (name == "texture_diffuse") num = std::to_string(diffuseNr++);
+            else if (name == "texture_specular") num = std::to_string(specularNr++);
+            else std::cout << "ERROR: invalid texture name " << name << std::endl;
+
+            auto prop = "material." + name + num;
+            shader.setInt(prop.c_str(), i);
+
+            textures_dirty = false;
+        }
     }
 
     // now draw the mesh and unbind the VAO
@@ -35,7 +41,6 @@ void Mesh::Draw(Shader& shader)
     glDrawElements(DrawMode, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

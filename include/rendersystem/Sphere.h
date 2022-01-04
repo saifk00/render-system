@@ -20,6 +20,7 @@ class Sphere {
     float angle; // clockwise angle about the axis
     float radius;
     int resolution;
+    float scale;
 
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -38,6 +39,8 @@ public:
         float angle=0,
         int resolution=3,
         const std::string& base_texture="");
+    
+    Sphere(const Sphere& other);
 
     void Draw(Shader& shader);
 
@@ -46,4 +49,6 @@ public:
     void AddTexture(const std::string& file, const std::string& type);
 
     void SetAxis(glm::vec3 newAxis);
+
+    void Scale(float scale);
 };

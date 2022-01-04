@@ -1,4 +1,4 @@
-#include <main.h>
+#include <resources.h>
 
 #include <iostream>
 #include <string>
@@ -85,8 +85,10 @@ int main()
 
     // build and compile our shader zprogram
     // ------------------------------------
+    Shader loadedModelShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
     Shader defaultShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
     Shader lightCubeShader(SHADERS_DIR "light_cube.vert", SHADERS_DIR "light_cube.frag");
+    Shader shaderSingleColor(SHADERS_DIR "single_color.vert", SHADERS_DIR "single_color.frag");
     PointLight mainLight = PointLight::DefaultPointLight();
     DirectionalLight dirLight = DirectionalLight::DefaultDirectionalLight();
 
@@ -100,7 +102,7 @@ int main()
     Cuboid platform(glm::vec3(0.0f, 1.0f, 0.0f),
         glm::vec3(0.0f),
         10.0f, 1.0f, 10.0f, 0.0f,
-        ASSETS_DIR "cobble.jpg");
+        ASSETS_DIR "awesome.png");
     platform.SetPosition(glm::vec3(0.0f, -3.0f, 0.0f));
 
     Sphere sphere(
@@ -110,8 +112,12 @@ int main()
         0.5f);
     sphere.AddTexture(ASSETS_DIR "eye.png", "texture_diffuse");
 
+    Sphere sphere_outline(sphere);
+    sphere_outline.Scale(1.1f);
+
     // load model
     Model loaded_model(MODELS_DIR "backpack/backpack.obj");
+    loaded_model.Rotate(180.0f);
 
     // render loop
     // -----------
@@ -131,6 +137,8 @@ int main()
         // ------
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0x00);
 
         if (camRot) {
             camera.Rotate((float)glm::radians(0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -152,13 +160,17 @@ int main()
         lightCube.SetPosition(lightPos);
         lightCube.Draw(lightCubeShader);
 
+        mainLight.SetPosition(lightPos);
+
         // draw default shaded models
         defaultShader.use();
+        loadedModelShader.use();
         // set up the light
-        mainLight.SetPosition(lightPos);
         mainLight.SetShader(defaultShader, 0);
+        mainLight.SetShader(loadedModelShader, 0);
 
         dirLight.SetShader(defaultShader, 0);
+        dirLight.SetShader(loadedModelShader, 0);
 
         defaultShader.setVec3("viewPos", camera.Position);
         defaultShader.setMat4("projection", projection);
@@ -167,21 +179,41 @@ int main()
         defaultShader.setFloat("far", far);
         defaultShader.setBool("enableVisualiseDepthBuffer", false);
 
-        // TODO: this should be done in model
-        glm::mat4 loaded_model_model = glm::mat4(1.0f);
-        loaded_model_model = glm::translate(loaded_model_model, glm::vec3(0.0f, 0.0f, 0.0f));
-        loaded_model_model = glm::scale(loaded_model_model, glm::vec3(1.0f));
-        loaded_model_model = glm::rotate(loaded_model_model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        defaultShader.setMat4("model", loaded_model_model);
-        defaultShader.setVec3("material.ambient", 0.0f, 0.0f, 0.0f);
-        defaultShader.setFloat("material.shininess", 32.0f);
+        loadedModelShader.setVec3("viewPos", camera.Position);
+        loadedModelShader.setMat4("projection", projection);
+        loadedModelShader.setMat4("view", view);
+        loadedModelShader.setFloat("near", near);
+        loadedModelShader.setFloat("far", far);
+        loadedModelShader.setBool("enableVisualiseDepthBuffer", false);
 
-        loaded_model.Draw(defaultShader);
+
+        loaded_model.Draw(loadedModelShader);
+
+        // defaultShader users
+        platform.Draw(defaultShader);
+
+        // stencil
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
 
         sphere.Draw(defaultShader);
-        sphere.Rotate(glfwGetTime() / 100.0);
 
-        platform.Draw(defaultShader);
+        // draw the upscaled sphere
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+        shaderSingleColor.use();
+        shaderSingleColor.setMat4("projection", projection);
+        shaderSingleColor.setMat4("view", view);
+        sphere_outline.Draw(shaderSingleColor);
+
+        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glEnable(GL_DEPTH_TEST);
+
+        sphere.Rotate(100.0f * deltaTime);
+
+        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);

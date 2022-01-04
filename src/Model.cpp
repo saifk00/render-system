@@ -3,8 +3,20 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
 void Model::Draw(Shader& shader)
 {
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, position);
+	model = glm::scale(model, glm::vec3(scale));
+	model = glm::rotate(model, glm::radians(angle), axis);
+
+	shader.setMat4("model", model);
+	shader.setVec3("material.ambient", 0.0f, 0.0f, 0.0f);
+	shader.setFloat("material.shininess", 32.0f);
+
 	for (unsigned int i = 0; i < meshes.size(); i++) {
 		meshes[i].Draw(shader);
 	}
@@ -133,6 +145,7 @@ unsigned int Model::TextureFromFile(std::string path) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		stbi_image_free(data);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	return texId;
@@ -171,4 +184,8 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 		}
 	}
 	return textures;
+}
+
+void Model::Rotate(float theta) {
+	angle += theta;
 }
