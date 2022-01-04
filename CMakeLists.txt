@@ -6,6 +6,8 @@ project(
     LANGUAGES CXX C
   )
 
+set(CMAKE_CXX_STANDARD 17)
+
 # build external dependencies
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")

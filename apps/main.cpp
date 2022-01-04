@@ -12,6 +12,7 @@
 #include <rendersystem/Sphere.h>
 #include <rendersystem/Model.h>
 #include <rendersystem/Lights.h>
+#include <rendersystem/Cuboid.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,7 +34,7 @@ float lastX = 400, lastY = 300;
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 // lighting
-glm::vec3 lightPos(2.0f, 0.5f, 2.0f);
+glm::vec3 lightPos(1.5f, 0.5f, 2.0f);
 float near = 0.1f;
 float far = 100.0f;
 bool camRot = false;
@@ -87,86 +88,27 @@ int main()
     Shader defaultShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
     Shader lightCubeShader(SHADERS_DIR "light_cube.vert", SHADERS_DIR "light_cube.frag");
     PointLight mainLight = PointLight::DefaultPointLight();
+    DirectionalLight dirLight = DirectionalLight::DefaultDirectionalLight();
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    Cuboid lightCube(
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        0.2f,0.2f,0.2f);
 
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+    Cuboid platform(glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f),
+        10.0f, 1.0f, 10.0f, 0.0f,
+        ASSETS_DIR "cobble.jpg");
+    platform.SetPosition(glm::vec3(0.0f, -3.0f, 0.0f));
 
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
-
-    unsigned int VBO, cubeVAO;
-    glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &VBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindVertexArray(cubeVAO);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
-    unsigned int lightCubeVAO;
-    glGenVertexArrays(1, &lightCubeVAO);
-    glBindVertexArray(lightCubeVAO);
-
-    // we only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need (it's already bound, but we do it again for educational purposes)
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-     Sphere sphere(
+    Sphere sphere(
         glm::vec3(0.0f, 0.0f, -3.0f),
         glm::vec3(0.0f, 1.0f, 0.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         0.5f);
-     sphere.AddTexture(ASSETS_DIR "eye.png", "texture_diffuse");
+    sphere.AddTexture(ASSETS_DIR "eye.png", "texture_diffuse");
 
     // load model
     Model loaded_model(MODELS_DIR "backpack/backpack.obj");
@@ -200,24 +142,15 @@ int main()
 
         // rotate the light
         glm::quat rot = glm::angleAxis((float)glm::radians(0.05f), glm::vec3(0.0f, 1.0f, 0.0f));
-        //auto dirCos = glm::cos(glfwGetTime());
-        //glm::quat rot2 = glm::angleAxis((float)glm::radians(0.025f), glm::normalize(glm::vec3(dirCos, 1.0f, dirCos)));
         lightPos = rot * glm::vec4(lightPos, 1.0f);
-        // be sure to activate shader when setting uniforms/drawing objects
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
 
         // also draw the lamp object
         lightCubeShader.use();
         lightCubeShader.setMat4("projection", projection);
         lightCubeShader.setMat4("view", view);
-        lightCubeShader.setMat4("model", model);
 
-        
-
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        lightCube.SetPosition(lightPos);
+        lightCube.Draw(lightCubeShader);
 
         // draw default shaded models
         defaultShader.use();
@@ -225,8 +158,8 @@ int main()
         mainLight.SetPosition(lightPos);
         mainLight.SetShader(defaultShader, 0);
 
-        //defaultShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        //defaultShader.setVec3("lightPos", lightPos);
+        dirLight.SetShader(defaultShader, 0);
+
         defaultShader.setVec3("viewPos", camera.Position);
         defaultShader.setMat4("projection", projection);
         defaultShader.setMat4("view", view);
@@ -247,6 +180,8 @@ int main()
 
         sphere.Draw(defaultShader);
         sphere.Rotate(glfwGetTime() / 100.0);
+
+        platform.Draw(defaultShader);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -255,9 +190,6 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteVertexArrays(1, &lightCubeVAO);
-    glDeleteBuffers(1, &VBO);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

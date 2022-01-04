@@ -1,9 +1,6 @@
 file(GLOB HEADER_LIST "${RenderSystem_SOURCE_DIR}/include/rendersystem/*.h")
 file(GLOB SRCS "${RenderSystem_SOURCE_DIR}/src/*.cpp")
 
-#project(Glad)
-#add_library(glad "${RenderSystem_SOURCE_DIR}/include/glad/glad.h" "${RenderSystem_SOURCE_DIR}/src/glad.cpp")
-#target_include_directories(glad PUBLIC ../include/)
 message("render_lib: ${SRCS}")
 add_library(render_lib STATIC "${SRCS}" "${HEADER_LIST}")
 

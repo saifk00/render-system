@@ -8,9 +8,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-#include "Shader.h"
-#include "Mesh.h"
-
+#include <rendersystem/Shader.h>
+#include <rendersystem/Mesh.h>
 
 class Model
 {
