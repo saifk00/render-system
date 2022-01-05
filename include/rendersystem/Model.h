@@ -20,7 +20,6 @@ public:
     }
     void Draw(Shader& shader);
 
-    static unsigned int TextureFromFile(std::string path);
     void Rotate(float angle);
 
 private:

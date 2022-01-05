@@ -3,11 +3,11 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <unordered_map>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <assimp/mesh.h>
-#include <rendersystem/Mesh.h>
 #include <rendersystem/Shader.h>
 #include <rendersystem/Camera.h>
 #include <rendersystem/Model.h>
@@ -77,7 +77,6 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
 
     // build and compile our shader zprogram
     // ------------------------------------
@@ -85,11 +84,17 @@ int main()
     // build and compile our shader zprogram
     // ------------------------------------
     Shader loadedModelShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
+    Shader grassShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
     Shader defaultShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
     Shader lightCubeShader(SHADERS_DIR "light_cube.vert", SHADERS_DIR "light_cube.frag");
-    Shader shaderSingleColor(SHADERS_DIR "single_color.vert", SHADERS_DIR "single_color.frag");
-    PointLight mainLight = PointLight::DefaultPointLight();
-    DirectionalLight dirLight = DirectionalLight::DefaultDirectionalLight();
+    auto mainLight = PointLight::DefaultPointLight();
+    auto dirLight = DirectionalLight::DefaultDirectionalLight();
+
+    const auto lightedShaders = std::vector<Shader>{
+        loadedModelShader,
+        grassShader,
+        defaultShader
+    };
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -99,7 +104,7 @@ int main()
 
     auto platform = ControlledMesh::CreateCuboid(10.0f, 1.0f, 10.0f);
     platform.SetAxis(glm::vec3{ 0, 1, 0 });
-    platform.AddTexture(ASSETS_DIR "awesome.png", "texture_diffuse");
+    platform.AddTexture(ASSETS_DIR "cobble.jpg", "texture_diffuse");
     platform.SetPosition(glm::vec3{ 0, -3, 0 });
 
     auto sphere = ControlledMesh::CreateSphere(0.5f);
@@ -107,12 +112,15 @@ int main()
     sphere.SetPosition(glm::vec3{ 0, 0, -3 });
     sphere.AddTexture(ASSETS_DIR "eye.png", "texture_diffuse");
 
-    auto sphere_outline(sphere);
-    sphere_outline.SetScale(1.1f);
+    auto grass = ControlledMesh::CreateQuad(1.5f, 1.5f);
+    grass.SetAxis(glm::vec3{ 0, 1, 0 });
+    grass.SetPosition(glm::vec3{ 3.0f, -1.75f, 0 });
+    grass.AddTexture(ASSETS_DIR "grass.png", "texture_diffuse");
+    grass.Rotate(90.0f);
 
-    // load model
     Model loaded_model(MODELS_DIR "backpack/backpack.obj");
     loaded_model.Rotate(180.0f);
+
 
     // render loop
     // -----------
@@ -131,9 +139,7 @@ int main()
         // render
         // ------
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilMask(0x00);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (camRot) {
             camera.Rotate((float)glm::radians(0.01f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -144,8 +150,7 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
 
         // rotate the light
-        glm::quat rot = glm::angleAxis((float)glm::radians(50.0f * deltaTime),
-            glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::quat rot = glm::angleAxis((float)glm::radians(50.0f * deltaTime), glm::vec3(0.0f, 1.0f, 0.0f));
         lightPos = rot * glm::vec4(lightPos, 1.0f);
 
         // also draw the lamp object
@@ -159,54 +164,35 @@ int main()
         mainLight.SetPosition(lightPos);
 
         // draw default shaded models
-        defaultShader.use();
-        loadedModelShader.use();
-        // set up the light
-        mainLight.SetShader(defaultShader, 0);
-        mainLight.SetShader(loadedModelShader, 0);
+        // set up shaders (camera, lights, etc.)
+        auto updateShader = [&](const Shader& shader) {
+            shader.use();
 
-        dirLight.SetShader(defaultShader, 0);
-        dirLight.SetShader(loadedModelShader, 0);
+            mainLight.SetShader(shader, 0);
+            dirLight.SetShader(shader, 0);
 
-        defaultShader.setVec3("viewPos", camera.Position);
-        defaultShader.setMat4("projection", projection);
-        defaultShader.setMat4("view", view);
-        defaultShader.setFloat("near", near);
-        defaultShader.setFloat("far", far);
-        defaultShader.setBool("enableVisualiseDepthBuffer", false);
+            shader.setVec3("viewPos", camera.Position);
+            shader.setMat4("projection", projection);
+            shader.setMat4("view", view);
+            shader.setFloat("near", near);
+            shader.setFloat("far", far);
+            shader.setBool("enableVisualiseDepthBuffer", false);
+        };
 
-        loadedModelShader.setVec3("viewPos", camera.Position);
-        loadedModelShader.setMat4("projection", projection);
-        loadedModelShader.setMat4("view", view);
-        loadedModelShader.setFloat("near", near);
-        loadedModelShader.setFloat("far", far);
-        loadedModelShader.setBool("enableVisualiseDepthBuffer", false);
-
-
+        for (auto& shader : lightedShaders) {
+            updateShader(shader);
+        }
+ 
+        // draw calls
+        // -----
         loaded_model.Draw(loadedModelShader);
-
-        // defaultShader users
         platform.Draw(defaultShader);
-
-        // stencil
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-
         sphere.Draw(defaultShader);
+        grass.Draw(grassShader);
 
-        // draw the upscaled sphere
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00);
-        glDisable(GL_DEPTH_TEST);
-        shaderSingleColor.use();
-        shaderSingleColor.setMat4("projection", projection);
-        shaderSingleColor.setMat4("view", view);
-        sphere_outline.Draw(shaderSingleColor);
 
-        glStencilMask(0xFF);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glEnable(GL_DEPTH_TEST);
-
+        // action logic
+        // -----
         sphere.Rotate(100.0f * deltaTime);
 
         

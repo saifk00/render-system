@@ -18,7 +18,7 @@ void PointLight::SetPosition(glm::vec3 pos)
 }
 
 // TODO: this shouldn't take in an index. Create a lightingsystem class that manages lights.
-void PointLight::SetShader(Shader& shader, int index)
+void PointLight::SetShader(const Shader& shader, int index) const
 {
     auto flPrefix = struct_name + "[" + std::to_string(index) + "]";
 
@@ -36,7 +36,7 @@ void DirectionalLight::SetDirection(glm::vec3 dir) {
     Direction = dir;
 }
 
-void DirectionalLight::SetShader(Shader& shader, int index) {
+void DirectionalLight::SetShader(const Shader& shader, int index) const {
     auto flPrefix = struct_name + "[" + std::to_string(index) + "]";
 
     shader.setBool(flPrefix + ".activated", true);
@@ -48,8 +48,8 @@ void DirectionalLight::SetShader(Shader& shader, int index) {
 
 DirectionalLight DirectionalLight::DefaultDirectionalLight() {
     return DirectionalLight(
-        glm::vec3(-1.0f, -1.0f, -1.0f),
-        glm::vec3(0.1f),
+        glm::vec3(-1.0f, -1.0f, 0.0f),
+        glm::vec3(0.2f),
         glm::vec3(0.5f),
         glm::vec3(0.5f)
     );

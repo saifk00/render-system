@@ -17,7 +17,11 @@ struct QuadAttenuation {
 		quadratic(q) {}
 };
 
-class PointLight {
+class Light {
+	virtual void SetShader(const Shader& s, int pos) const = 0;
+};
+
+class PointLight : Light {
 	const std::string struct_name = "pointLights";
 
 	glm::vec3 Position;
@@ -41,10 +45,10 @@ public:
 
 	void SetPosition(glm::vec3 pos);
 
-	void SetShader(Shader& shader, int index);
+	void SetShader(const Shader& shader, int index) const override;
 };
 
-class DirectionalLight {
+class DirectionalLight : Light {
 	const std::string struct_name = "directionalLights";
 
 	glm::vec3 Direction;
@@ -64,5 +68,5 @@ public:
 
 	void SetDirection(glm::vec3 dir);
 
-	void SetShader(Shader& shader, int index);
+	void SetShader(const Shader& shader, int index) const override;
 };
