@@ -22,6 +22,14 @@ public:
 
     void Rotate(float angle);
 
+    bool IsOpaque() {
+        return opaque_;
+    }
+
+    glm::vec3 Position() {
+        return position;
+    }
+
 private:
     // model data
     std::vector<Mesh> meshes;
@@ -32,6 +40,8 @@ private:
     glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
     float angle = 0.0f;
     float scale = 1.0f;
+
+    bool opaque_ = true;
 
     void loadModel(std::string path);
     void processNode(aiNode* node, const aiScene* scene);

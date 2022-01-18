@@ -25,6 +25,8 @@ struct Texture {
 class Drawable {
 public:
     virtual void Draw(const Shader& shader) = 0;
+    virtual bool IsOpaque() = 0;
+    virtual glm::vec3 Position() = 0;
 };
 
 class Mesh : public Drawable {
@@ -34,6 +36,14 @@ public:
     Mesh(const Mesh& other);
 
     void Draw(const Shader& shader) override;
+    bool IsOpaque() {
+        return opaque_;
+    }
+
+    glm::vec3 Position() {
+        return glm::vec3(0, 0, 0);
+    }
+
 protected:
     bool textures_dirty = true;
 
@@ -45,6 +55,7 @@ protected:
 
     //  render data
     unsigned int VAO, VBO, EBO;
+    bool opaque_ = true;
 
     // sets vao vbo ebo from vertices and indices
     void setupMesh();
@@ -53,15 +64,17 @@ protected:
 // a mesh that can be positioned, rotated and scaled
 class ControlledMesh : public Mesh {
 public:
-    ControlledMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : Mesh(vertices, indices) {}
+    ControlledMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, bool opaque=true) : Mesh(vertices, indices) {
+        opaque_ = opaque;
+    }
     ControlledMesh(const ControlledMesh& other);
     
     void Draw(const Shader& shader) override;
 
-    static ControlledMesh CreateSphere(float radius, int resolution=3);
-    static ControlledMesh CreateCuboid(float length, float height, float depth);
-    static ControlledMesh CreateCube(float size);
-    static ControlledMesh CreateQuad(float length, float height);
+    static ControlledMesh CreateSphere(float radius, int resolution=3, bool opaque=true);
+    static ControlledMesh CreateCuboid(float length, float height, float depth, bool opaque=true);
+    static ControlledMesh CreateCube(float size, bool opaque=true);
+    static ControlledMesh CreateQuad(float length, float height, bool opaque=true);
 
 
     void AddTexture(const std::string& texture_path,
@@ -74,6 +87,10 @@ public:
     void SetScale(float scale);
     void SetAxis(const glm::vec3& axis);
     void SetPosition(const glm::vec3& pos);
+
+    glm::vec3 Position() {
+        return position;
+    }
 
 private:
     // transformation data

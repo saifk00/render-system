@@ -16,6 +16,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <map>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -77,16 +78,18 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // build and compile our shader zprogram
     // ------------------------------------
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader loadedModelShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
-    Shader defaultShader(   SHADERS_DIR "colors.vert",  SHADERS_DIR "colors.frag");
-    Shader grassShader(SHADERS_DIR "blend.vert", SHADERS_DIR "blend.frag");
+    Shader defaultShader(SHADERS_DIR "colors.vert",  SHADERS_DIR "colors.frag");
+    Shader grassShader(SHADERS_DIR "drop.vert", SHADERS_DIR "drop.frag");
     Shader lightCubeShader(SHADERS_DIR "light_cube.vert", SHADERS_DIR "light_cube.frag");
+    Shader blendedShader(SHADERS_DIR "blend.vert", SHADERS_DIR "blend.frag");
     auto mainLight = PointLight::DefaultPointLight();
     auto dirLight = DirectionalLight::DefaultDirectionalLight();
 
@@ -118,6 +121,14 @@ int main()
     });
     grass->Rotate(90.0f);
 
+    auto blended_window = std::make_shared<ControlledMesh>(ControlledMesh::CreateQuad(1.5f, 1.5f, false));
+    blended_window->SetPosition(glm::vec3{ -3.0f, -1.75f, 0 });
+    blended_window->AddTexture(ASSETS_DIR "blending_transparent_window.png", "texture_diffuse");
+
+    auto blended_window_2 = std::make_shared<ControlledMesh>(ControlledMesh::CreateQuad(1.5f, 1.5f, false));
+    blended_window_2->SetPosition(glm::vec3{ -3.0f, -1.75f, 3.0f });
+    blended_window_2->AddTexture(ASSETS_DIR "blending_transparent_window.png", "texture_diffuse");
+
     auto loaded_model = std::make_shared<Model>(MODELS_DIR "backpack/backpack.obj");
     loaded_model->Rotate(180.0f);
 
@@ -133,12 +144,15 @@ int main()
             std::vector<std::shared_ptr<Drawable>>{
                 grass
             }),
-        // TODO: why doesn't this work?
-        //std::make_pair(loadedModelShader
-        //    std::vector<std::shared_ptr<Drawable>>{
-        //        platform,
-        //        sphere
-        //    })
+        std::make_pair(lightCubeShader,
+            std::vector<std::shared_ptr<Drawable>>{
+                lightCube
+            }),
+        std::make_pair(blendedShader,
+            std::vector<std::shared_ptr<Drawable>>{
+                blended_window,
+                blended_window_2
+            })
     };
 
     // render loop
@@ -168,20 +182,6 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, near, far);
         glm::mat4 view = camera.GetViewMatrix();
 
-        // rotate the light
-        glm::quat rot = glm::angleAxis((float)glm::radians(50.0f * deltaTime), glm::vec3(0.0f, 1.0f, 0.0f));
-        lightPos = rot * glm::vec4(lightPos, 1.0f);
-
-        // also draw the lamp object
-        lightCubeShader.use();
-        lightCubeShader.setMat4("projection", projection);
-        lightCubeShader.setMat4("view", view);
-
-        lightCube->SetPosition(lightPos);
-        lightCube->Draw(lightCubeShader);
-
-        mainLight.SetPosition(lightPos);
-
         // draw default shaded models
         // set up shaders (camera, lights, etc.)
         for (auto& [shader, objs] : lightedShaders) {
@@ -191,20 +191,36 @@ int main()
             dirLight.SetShader(shader, 0);
 
             shader.setVec3("viewPos", camera.Position);
-            shader.setMat4("projection", projection);
             shader.setMat4("view", view);
+            shader.setMat4("projection", projection);
             shader.setFloat("near", near);
             shader.setFloat("far", far);
             shader.setBool("enableVisualiseDepthBuffer", false);
 
+            std::map<float, std::shared_ptr<Drawable>> sorted_nonopaques;
             for (auto& obj : objs) {
-                obj->Draw(shader);
+                if (obj->IsOpaque()) {
+                    obj->Draw(shader);
+                }
+                else {
+                    auto dist = glm::length(camera.Position - obj->Position());
+                    sorted_nonopaques[dist] = obj;
+                }
+            }
+
+            for (auto it = sorted_nonopaques.rbegin(); it != sorted_nonopaques.rend(); ++it) {
+                it->second->Draw(shader);
             }
         }
 
         // action logic
         // -----
+        glm::quat rot = glm::angleAxis((float)glm::radians(50.0f * deltaTime), glm::vec3(0.0f, 1.0f, 0.0f));
+        lightPos = rot * glm::vec4(lightPos, 1.0f);
+
         sphere->Rotate(100.0f * deltaTime);
+        lightCube->SetPosition(lightPos);
+        mainLight.SetPosition(lightPos);
 
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

@@ -38,6 +38,7 @@ ControlledMesh::ControlledMesh(const ControlledMesh& other) : Mesh(other) {
     this->position = other.position;
     this->color = other.color;
     this->scale = other.scale;
+    this->opaque_ = other.opaque_;
 }
 
 void ControlledMesh::Rotate(float degrees) {
@@ -164,7 +165,7 @@ void ControlledMesh::AddTexture(const std::string& texture_path,
 }
 
 
-ControlledMesh ControlledMesh::CreateSphere(float radius, int resolution) {
+ControlledMesh ControlledMesh::CreateSphere(float radius, int resolution, bool opaque) {
     // step 1: generate vertices (incl. vertex|normal|texcoord) and indices
     std::vector<Vertex> tmp_vertices;
     std::vector<unsigned int> tmp_indices;
@@ -222,13 +223,13 @@ ControlledMesh ControlledMesh::CreateSphere(float radius, int resolution) {
         }
     }
 
-    auto cmesh = ControlledMesh(tmp_vertices, tmp_indices);
+    auto cmesh = ControlledMesh(tmp_vertices, tmp_indices, opaque);
     cmesh.DrawMode = GL_TRIANGLE_STRIP;
 
     return cmesh;
 }
 
-ControlledMesh ControlledMesh::CreateCuboid(float length, float height, float depth) {
+ControlledMesh ControlledMesh::CreateCuboid(float length, float height, float depth, bool opaque) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
@@ -290,17 +291,17 @@ ControlledMesh ControlledMesh::CreateCuboid(float length, float height, float de
         });
     }
 
-    auto cmesh = ControlledMesh(vertices, indices);
+    auto cmesh = ControlledMesh(vertices, indices, opaque);
     cmesh.DrawMode = GL_TRIANGLES;
 
     return cmesh;
 }
 
-ControlledMesh ControlledMesh::CreateCube(float size) {
+ControlledMesh ControlledMesh::CreateCube(float size, bool opaque) {
     return ControlledMesh::CreateCuboid(size, size, size);
 }
 
-ControlledMesh ControlledMesh::CreateQuad(float length, float height) {
+ControlledMesh ControlledMesh::CreateQuad(float length, float height, bool opaque) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
@@ -329,7 +330,7 @@ ControlledMesh ControlledMesh::CreateQuad(float length, float height) {
         4, 6, 7
     });
 
-    auto cmesh = ControlledMesh(vertices, indices);
+    auto cmesh = ControlledMesh(vertices, indices, opaque);
     cmesh.DrawMode = GL_TRIANGLES;
 
     return cmesh;
