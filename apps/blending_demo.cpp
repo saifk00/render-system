@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <unordered_map>
+#include <memory>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
