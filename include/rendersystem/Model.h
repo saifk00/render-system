@@ -11,14 +11,14 @@
 #include <rendersystem/Shader.h>
 #include <rendersystem/Mesh.h>
 
-class Model
+class Model : public Drawable
 {
 public:
     Model(std::string path)
     {
         loadModel(path);
     }
-    void Draw(Shader& shader);
+    void Draw(const Shader& shader) override;
 
     void Rotate(float angle);
 

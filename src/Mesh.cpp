@@ -63,7 +63,7 @@ void ControlledMesh::SetPosition(const glm::vec3& pos) {
     this->position = pos;
 }
 
-void Mesh::Draw(Shader& shader) {
+void Mesh::Draw(const Shader& shader) {
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
 
@@ -93,11 +93,9 @@ void Mesh::Draw(Shader& shader) {
     glBindVertexArray(VAO);
     glDrawElements(DrawMode, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ControlledMesh::Draw(Shader& shader)
+void ControlledMesh::Draw(const Shader& shader)
 {
     // apply transformations
     glm::mat4 model = glm::mat4(1.0f);
@@ -144,7 +142,9 @@ void Mesh::setupMesh()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void ControlledMesh::AddTexture(const std::string& texture_path, const std::string& texture_type)
+void ControlledMesh::AddTexture(const std::string& texture_path,
+    const std::string& texture_type,
+    std::function<void(void)> textureSettingsCallback)
 {
     // check if texture is already loaded
     for (unsigned int i = 0; i < textures.size(); i++) {
@@ -155,7 +155,7 @@ void ControlledMesh::AddTexture(const std::string& texture_path, const std::stri
 
     // if not, load it
     Texture texture;
-    texture.id = Utils::TextureFromFile(texture_path);
+    texture.id = Utils::TextureFromFile(texture_path, textureSettingsCallback);
     texture.type = texture_type;
     texture.path = texture_path;
     textures.push_back(texture);

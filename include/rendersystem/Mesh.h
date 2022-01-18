@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <rendersystem/Shader.h>
+#include <functional>
 
 
 struct Vertex {
@@ -21,13 +22,18 @@ struct Texture {
     std::string path;
 };
 
-class Mesh {
+class Drawable {
+public:
+    virtual void Draw(const Shader& shader) = 0;
+};
+
+class Mesh : public Drawable {
 public:
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
     Mesh(const Mesh& other);
 
-    void Draw(Shader& shader);
+    void Draw(const Shader& shader) override;
 protected:
     bool textures_dirty = true;
 
@@ -45,12 +51,12 @@ protected:
 };
 
 // a mesh that can be positioned, rotated and scaled
-class ControlledMesh : Mesh {
+class ControlledMesh : public Mesh {
 public:
     ControlledMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : Mesh(vertices, indices) {}
     ControlledMesh(const ControlledMesh& other);
     
-    void Draw(Shader& shader);
+    void Draw(const Shader& shader) override;
 
     static ControlledMesh CreateSphere(float radius, int resolution=3);
     static ControlledMesh CreateCuboid(float length, float height, float depth);
@@ -58,7 +64,9 @@ public:
     static ControlledMesh CreateQuad(float length, float height);
 
 
-    void AddTexture(const std::string& texture_path, const std::string& texture_type);
+    void AddTexture(const std::string& texture_path,
+        const std::string& texture_type,
+        std::function<void(void)> textureSettingsCallback = []() {});
 
     void SetColor(const glm::vec3& color);
 

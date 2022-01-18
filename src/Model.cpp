@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-void Model::Draw(Shader& shader)
+void Model::Draw(const Shader& shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, position);

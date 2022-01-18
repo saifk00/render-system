@@ -133,7 +133,6 @@ void main() {
             FragColor += CalcDirectionalLight(directionalLights[i], Normal, viewDir);
         }
     }
-    //vec3 light1 = CalcPointLight(pointLights[0], Normal, FragPos, viewDir);
 
     if (enableVisualiseDepthBuffer) {
         FragColor = vec4(vec3(LinearizeDepth(gl_FragCoord.z) / far), 1.0);

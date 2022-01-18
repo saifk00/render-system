@@ -7,7 +7,8 @@
 
 
 namespace Utils {
-    unsigned int TextureFromFile(const std::string& path) {
+    unsigned int TextureFromFile(const std::string& path,
+            std::function<void(void)> textureSettingsCallback) {
         unsigned int texId;
 
         glGenTextures(1, &texId);
@@ -39,6 +40,8 @@ namespace Utils {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            textureSettingsCallback();
 
             stbi_image_free(data);
             glBindTexture(GL_TEXTURE_2D, 0);

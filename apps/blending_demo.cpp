@@ -84,43 +84,62 @@ int main()
     // build and compile our shader zprogram
     // ------------------------------------
     Shader loadedModelShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
-    Shader grassShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
-    Shader defaultShader(SHADERS_DIR "colors.vert", SHADERS_DIR "colors.frag");
+    Shader defaultShader(   SHADERS_DIR "colors.vert",  SHADERS_DIR "colors.frag");
+    Shader grassShader(SHADERS_DIR "blend.vert", SHADERS_DIR "blend.frag");
     Shader lightCubeShader(SHADERS_DIR "light_cube.vert", SHADERS_DIR "light_cube.frag");
     auto mainLight = PointLight::DefaultPointLight();
     auto dirLight = DirectionalLight::DefaultDirectionalLight();
 
-    const auto lightedShaders = std::vector<Shader>{
-        loadedModelShader,
-        grassShader,
-        defaultShader
-    };
-
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    auto lightCube = ControlledMesh::CreateCube(0.2f);
-    lightCube.SetAxis(glm::vec3{ 0, 1, 0 });
-    lightCube.SetColor(glm::vec3{ 1, 1, 1 });
+    auto lightCube = std::make_shared<ControlledMesh>(ControlledMesh::CreateCube(0.2f));
+    lightCube->SetAxis(glm::vec3{ 0, 1, 0 });
+    lightCube->SetColor(glm::vec3{ 1, 1, 1 });
 
-    auto platform = ControlledMesh::CreateCuboid(10.0f, 1.0f, 10.0f);
-    platform.SetAxis(glm::vec3{ 0, 1, 0 });
-    platform.AddTexture(ASSETS_DIR "cobble.jpg", "texture_diffuse");
-    platform.SetPosition(glm::vec3{ 0, -3, 0 });
+    auto platform = std::make_shared<ControlledMesh>(ControlledMesh::CreateCuboid(10.0f, 1.0f, 10.0f));
+    platform->SetAxis(glm::vec3{ 0, 1, 0 });
+    platform->AddTexture(ASSETS_DIR "cobble.jpg", "texture_diffuse");
+    platform->SetPosition(glm::vec3{ 0, -3, 0 });
 
-    auto sphere = ControlledMesh::CreateSphere(0.5f);
-    sphere.SetAxis(glm::vec3{ 0, 1, 0 });
-    sphere.SetPosition(glm::vec3{ 0, 0, -3 });
-    sphere.AddTexture(ASSETS_DIR "eye.png", "texture_diffuse");
+    auto sphere = std::make_shared<ControlledMesh>(ControlledMesh::CreateSphere(0.5f));
+    sphere->SetAxis(glm::vec3{ 0, 1, 0 });
+    sphere->SetPosition(glm::vec3{ 0, 0, -3 });
+    sphere->AddTexture(ASSETS_DIR "eye.png", "texture_diffuse", []() {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    });
 
-    auto grass = ControlledMesh::CreateQuad(1.5f, 1.5f);
-    grass.SetAxis(glm::vec3{ 0, 1, 0 });
-    grass.SetPosition(glm::vec3{ 3.0f, -1.75f, 0 });
-    grass.AddTexture(ASSETS_DIR "grass.png", "texture_diffuse");
-    grass.Rotate(90.0f);
+    auto grass = std::make_shared<ControlledMesh>(ControlledMesh::CreateQuad(1.5f, 1.5f));
+    grass->SetAxis(glm::vec3{ 0, 1, 0 });
+    grass->SetPosition(glm::vec3{ 3.0f, -1.75f, 0 });
+    grass->AddTexture(ASSETS_DIR "grass.png", "texture_diffuse", []() {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    });
+    grass->Rotate(90.0f);
 
-    Model loaded_model(MODELS_DIR "backpack/backpack.obj");
-    loaded_model.Rotate(180.0f);
+    auto loaded_model = std::make_shared<Model>(MODELS_DIR "backpack/backpack.obj");
+    loaded_model->Rotate(180.0f);
 
+
+    auto lightedShaders = std::vector<std::pair<const Shader, std::vector<std::shared_ptr<Drawable>>>>{
+        std::make_pair(defaultShader,
+            std::vector<std::shared_ptr<Drawable>>{
+                loaded_model,
+                platform,
+                sphere
+            }),
+        std::make_pair(grassShader,
+            std::vector<std::shared_ptr<Drawable>>{
+                grass
+            }),
+        // TODO: why doesn't this work?
+        //std::make_pair(loadedModelShader
+        //    std::vector<std::shared_ptr<Drawable>>{
+        //        platform,
+        //        sphere
+        //    })
+    };
 
     // render loop
     // -----------
@@ -158,14 +177,14 @@ int main()
         lightCubeShader.setMat4("projection", projection);
         lightCubeShader.setMat4("view", view);
 
-        lightCube.SetPosition(lightPos);
-        lightCube.Draw(lightCubeShader);
+        lightCube->SetPosition(lightPos);
+        lightCube->Draw(lightCubeShader);
 
         mainLight.SetPosition(lightPos);
 
         // draw default shaded models
         // set up shaders (camera, lights, etc.)
-        auto updateShader = [&](const Shader& shader) {
+        for (auto& [shader, objs] : lightedShaders) {
             shader.use();
 
             mainLight.SetShader(shader, 0);
@@ -177,23 +196,15 @@ int main()
             shader.setFloat("near", near);
             shader.setFloat("far", far);
             shader.setBool("enableVisualiseDepthBuffer", false);
-        };
 
-        for (auto& shader : lightedShaders) {
-            updateShader(shader);
+            for (auto& obj : objs) {
+                obj->Draw(shader);
+            }
         }
- 
-        // draw calls
-        // -----
-        loaded_model.Draw(loadedModelShader);
-        platform.Draw(defaultShader);
-        sphere.Draw(defaultShader);
-        grass.Draw(grassShader);
-
 
         // action logic
         // -----
-        sphere.Rotate(100.0f * deltaTime);
+        sphere->Rotate(100.0f * deltaTime);
 
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
