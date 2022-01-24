@@ -20,6 +20,8 @@ struct Texture {
     unsigned int id;
     std::string type;
     std::string path;
+
+    Texture(unsigned int id, std::string type, std::string path) : id(id), type(type), path(path) {}
 };
 
 class Drawable {
@@ -80,6 +82,7 @@ public:
     void AddTexture(const std::string& texture_path,
         const std::string& texture_type,
         std::function<void(void)> textureSettingsCallback = []() {});
+    void AddTexture(Texture tex);
 
     void SetColor(const glm::vec3& color);
 

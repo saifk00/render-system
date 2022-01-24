@@ -1,5 +1,6 @@
 add_executable(demo_stencil stencil_demo.cpp)
 add_executable(demo_blending blending_demo.cpp)
+add_executable(demo_advanced advanced_demo.cpp)
 
 set(CMAKE_MODELS_DIR "${RenderSystem_SOURCE_DIR}/models/")
 set(CMAKE_ASSETS_DIR "${RenderSystem_SOURCE_DIR}/assets/")
@@ -21,3 +22,6 @@ target_link_libraries(demo_stencil PRIVATE ${DEMO_LIBS})
 
 target_include_directories(demo_blending PUBLIC ${DEMO_INCLUDES})
 target_link_libraries(demo_blending PRIVATE ${DEMO_LIBS})
+
+target_include_directories(demo_advanced PUBLIC ${DEMO_INCLUDES})
+target_link_libraries(demo_advanced PRIVATE ${DEMO_LIBS})

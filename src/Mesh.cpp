@@ -155,12 +155,18 @@ void ControlledMesh::AddTexture(const std::string& texture_path,
     }
 
     // if not, load it
-    Texture texture;
-    texture.id = Utils::TextureFromFile(texture_path, textureSettingsCallback);
-    texture.type = texture_type;
-    texture.path = texture_path;
+    Texture texture(
+        Utils::TextureFromFile(texture_path, textureSettingsCallback),
+        texture_type,
+        texture_path
+    );
     textures.push_back(texture);
 
+    textures_dirty = true;
+}
+
+void ControlledMesh::AddTexture(Texture tex) {
+    textures.push_back(tex);
     textures_dirty = true;
 }
 

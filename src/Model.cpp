@@ -133,10 +133,12 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 				"/" +
 				std::string(str.C_Str());
 
-			Texture texture;
-			texture.id = Utils::TextureFromFile(fullpath);
-			texture.type = typeName;
-			texture.path = std::string(str.C_Str());
+			Texture texture{
+				Utils::TextureFromFile(fullpath),
+				typeName,
+				std::string(str.C_Str())
+			};
+
 			textures.push_back(texture);
 			textures_loaded.push_back(texture);
 		}
